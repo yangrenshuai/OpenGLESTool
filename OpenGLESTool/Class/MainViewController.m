@@ -98,9 +98,9 @@
     NSString* vertFile = [[NSBundle mainBundle] pathForResource:@"Shader3" ofType:@"vs"];
     NSString* fragFile = [[NSBundle mainBundle] pathForResource:@"Shader3" ofType:@"frag"];
     
-    NSString* vertexContent = [NSString stringWithContentsOfFile:vertFile encoding:NSUTF8StringEncoding error:nil];
-    NSString* fragContent = [NSString stringWithContentsOfFile:fragFile encoding:NSUTF8StringEncoding error:nil];
-    [openGlView setVertexShader:vertexContent fragmentShader:fragContent];
+    vertexShaderString = [NSString stringWithContentsOfFile:vertFile encoding:NSUTF8StringEncoding error:nil];
+    fragmentShaderString = [NSString stringWithContentsOfFile:fragFile encoding:NSUTF8StringEncoding error:nil];
+    [openGlView setVertexShader:vertexShaderString fragmentShader:fragmentShaderString];
     
 //    SettingCellView* cell = [SettingCellView viewFromNIB];
 //    cell.frame = CGRectMake(0, 0, 200, 200);

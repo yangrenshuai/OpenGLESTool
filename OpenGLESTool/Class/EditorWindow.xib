@@ -8,7 +8,6 @@
         <customObject id="-2" userLabel="File's Owner" customClass="EditorWindow">
             <connections>
                 <outlet property="scrollView" destination="fXK-V7-kR5" id="vt1-lY-X42"/>
-                <outlet property="textField" destination="MlC-l7-lcD" id="uEY-iI-5Jd"/>
                 <outlet property="textView" destination="h13-bV-Usm" id="ugA-sy-deV"/>
                 <outlet property="window" destination="F0z-JX-Cv5" id="gIp-Ho-8D9"/>
             </connections>
@@ -24,15 +23,6 @@
                 <rect key="frame" x="0.0" y="0.0" width="480" height="300"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <textField verticalHuggingPriority="750" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="MlC-l7-lcD">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="300"/>
-                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="left" drawsBackground="YES" id="5OC-7j-UKm">
-                            <font key="font" usesAppearanceFont="YES"/>
-                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
-                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
-                        </textFieldCell>
-                    </textField>
                     <scrollView appearanceType="aqua" fixedFrame="YES" borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" translatesAutoresizingMaskIntoConstraints="NO" id="fXK-V7-kR5">
                         <rect key="frame" x="20" y="20" width="440" height="260"/>
                         <autoresizingMask key="autoresizingMask"/>
@@ -46,7 +36,7 @@
                                     <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                     <size key="minSize" width="425" height="245"/>
-                                    <size key="maxSize" width="10000000" height="10000000"/>
+                                    <size key="maxSize" width="425" height="10000000"/>
                                     <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
                                 </textView>
                             </subviews>
@@ -65,7 +55,7 @@
             <connections>
                 <outlet property="delegate" destination="-2" id="0bl-1N-AYu"/>
             </connections>
-            <point key="canvasLocation" x="-277" y="145"/>
+            <point key="canvasLocation" x="-36" y="151"/>
         </window>
         <userDefaultsController representsSharedInstance="YES" id="ySl-jx-fiD"/>
     </objects>

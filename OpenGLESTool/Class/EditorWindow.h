@@ -22,7 +22,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, assign) bool isSaved;
 
-@property (strong) IBOutlet NSTextField *textField;
 @property (strong) IBOutlet NSScrollView *scrollView;
 @property (strong) IBOutlet NSTextView *textView;
 

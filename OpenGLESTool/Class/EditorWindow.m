@@ -8,8 +8,9 @@
 
 #import "EditorWindow.h"
 
-@interface EditorWindow ()<NSWindowDelegate>{
+@interface EditorWindow ()<NSWindowDelegate,NSTextViewDelegate>{
     NSWindow* window;
+    float widthDiff;
 }
 @end
 
@@ -24,6 +25,7 @@
 -(void)awakeFromNib{
     [super awakeFromNib];
 
+    widthDiff == 0;
     NSArray<NSWindow *>* windows = [NSApplication sharedApplication].windows;
     for (NSWindow *win in windows){
         if([win.title isEqualToString:_winTitle]){
@@ -33,25 +35,15 @@
         }
     }
     
-    self.textField.usesSingleLineMode = false;
-
-    
-    
     
     // 关闭自动换行
     self.textView.textContainer.widthTracksTextView = false;
     self.textView.textContainer.containerSize = CGSizeMake(CGFLOAT_MAX, CGFLOAT_MAX);
+    self.textView.delegate = self;
     
-//    self.scrollView.documentView.frame = CGRectMake(0, 0, self.scrollView.documentView.frame.size.width*2, self.scrollView.documentView.frame.size.height);
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onTextFieldDidChange:) name:NSControlTextDidChangeNotification object:self.textField];
     
-    
-    // self.textView.textContainer.size
-    
-//    self.textView.string sizeWithAttributes:(nullable NSDictionary<NSAttributedStringKey,id> *)
-//    NSFontAttributeName* ss = [NSFont fontWithName:@"Helvetica(Neue) " size:12] string;
-//    NSFont, default Helvetica(Neue) 12
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onTextFieldDidChange:) name:NSControlTextDidEndEditingNotification object:self.textField];
+    widthDiff = self.scrollView.frame.size.width - self.scrollView.contentView.frame.size.width;
     
     NSMenuItem * saveItem = [[NSApp mainMenu]itemWithTitle:@"Save..."];
     NSMenuItem * saveAsItem = [[NSApp mainMenu]itemWithTitle:@"Save As..."];
@@ -64,6 +56,7 @@
         [saveItem setTarget:self];
         [saveItem setAction:@selector(onSaveAsBtnClicked)];
     }
+    
 }
 
 -(void)onSaveBtnClicked{
@@ -76,16 +69,29 @@
 
 - (void)windowDidResize:(NSNotification *)notification{
     // NSLog(@"-----NSSettingWindow----!rect:%@",NSStringFromRect(self.window.frame));
-    self.textField.frame = self.window.contentView.bounds;
+    self.scrollView.frame = self.window.contentView.bounds;
 }
 
 
 -(void)dealloc{
-    [[NSNotificationCenter defaultCenter] removeObserver:self.textField];
+    [[NSNotificationCenter defaultCenter] removeObserver:self.textView];
 }
 
--(void)onTextFieldDidChange:(NSNotification *)notification{
+- (void)textDidChange:(NSNotification *)notification{
+    //Get glyph range for boundingRectForGlyphRange:
+    NSRange range = [[self.textView layoutManager] glyphRangeForTextContainer:self.textView.textContainer];
+
+    float textViewWidth = [[self.textView layoutManager] boundingRectForGlyphRange:range inTextContainer:self.textView.textContainer].size.width;
+    NSLog(@"textViewWidth:%f",textViewWidth);
+    
+    textViewWidth = textViewWidth + 10;
+    if(textViewWidth < self.scrollView.frame.size.width - widthDiff){
+        textViewWidth = self.scrollView.frame.size.width - widthDiff;
+    }
+    self.scrollView.documentView.frame = CGRectMake(0, 0, textViewWidth, self.scrollView.contentView.frame.size.height);
+    
     self.isSaved = false;
+    
 }
 
 -(void)updateTextFile{
@@ -100,7 +106,7 @@
     }else{
         self.shaderSource = @"";
     }
-    self.textField.stringValue = self.shaderSource;
+    self.textView.string = self.shaderSource;
 }
 
 @end
