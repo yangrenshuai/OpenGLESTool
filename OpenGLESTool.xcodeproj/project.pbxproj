@@ -37,6 +37,7 @@
 		18E579DB24C996F6009513E0 /* NSSettingWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 18E579D924C996F6009513E0 /* NSSettingWindow.xib */; };
 		18E579DE24C99874009513E0 /* SettingCellView.m in Sources */ = {isa = PBXBuildFile; fileRef = 18E579DD24C99874009513E0 /* SettingCellView.m */; };
 		18E579E024C99C57009513E0 /* SettingCellView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 18E579DF24C99C57009513E0 /* SettingCellView.xib */; };
+		723269D6254ABD440020248B /* SettingCellValue.m in Sources */ = {isa = PBXBuildFile; fileRef = 723269D5254ABD440020248B /* SettingCellValue.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -86,6 +87,8 @@
 		18E579DC24C99874009513E0 /* SettingCellView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SettingCellView.h; sourceTree = "<group>"; };
 		18E579DD24C99874009513E0 /* SettingCellView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SettingCellView.m; sourceTree = "<group>"; };
 		18E579DF24C99C57009513E0 /* SettingCellView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SettingCellView.xib; sourceTree = "<group>"; };
+		723269D4254ABD440020248B /* SettingCellValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SettingCellValue.h; sourceTree = "<group>"; };
+		723269D5254ABD440020248B /* SettingCellValue.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SettingCellValue.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -218,6 +221,8 @@
 				18E579DC24C99874009513E0 /* SettingCellView.h */,
 				18E579DD24C99874009513E0 /* SettingCellView.m */,
 				18E579DF24C99C57009513E0 /* SettingCellView.xib */,
+				723269D4254ABD440020248B /* SettingCellValue.h */,
+				723269D5254ABD440020248B /* SettingCellValue.m */,
 			);
 			path = view;
 			sourceTree = "<group>";
@@ -305,6 +310,7 @@
 				18E579CF24C96A5C009513E0 /* NSScrollView+NSSTools.m in Sources */,
 				18E5797824C8286B009513E0 /* main.m in Sources */,
 				18E579DE24C99874009513E0 /* SettingCellView.m in Sources */,
+				723269D6254ABD440020248B /* SettingCellValue.m in Sources */,
 				18E5796D24C82863009513E0 /* AppDelegate.m in Sources */,
 				18E5799C24C8289A009513E0 /* MainViewController.m in Sources */,
 				18E579DA24C996F6009513E0 /* NSSettingWindow.m in Sources */,

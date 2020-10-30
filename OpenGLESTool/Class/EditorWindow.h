@@ -10,7 +10,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+@protocol EditorWindowDelegate <NSObject>
+-(void)onEditorWindowShaderSaved:(NSString*)winTitle path:(NSString*)path shaderString:(NSString*)shaderStr;
+@end
+
 @interface EditorWindow : NSWindowController
+
+@property(nonatomic,assign)id<EditorWindowDelegate>delegate;
 
 @property (nonatomic, copy) NSString* winTitle;
 

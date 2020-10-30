@@ -9,6 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
 #import <Foundation/NSBundle.h>
+#include "SettingCellValue.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -28,10 +29,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (assign) bool isFloatValue;
 @property (assign) bool isBoolValue;
 
+@property (strong) SettingCellValue* settingValue;
+
 + (instancetype)viewFromNIB;
 
 -(void)setTitle:(NSString*)title;
 -(void)updateValue;
+-(void)resetValue;
 
 @end
 

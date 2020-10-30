@@ -15,13 +15,14 @@
 #import "NSSettingWindow.h"
 #import "EditorWindow.h"
 
-@interface MainViewController ()<NSWindowDelegate,DragFileInButtonDelegate,DragFileInEditTextDelegate,NSSettingWindowDelegate>{
+@interface MainViewController ()<NSWindowDelegate,DragFileInButtonDelegate,DragFileInEditTextDelegate,EditorWindowDelegate>{ //NSSettingWindowDelegate
     NSWindow * window;
     //OpenGLView* openGlView;
     //NSScrollView* rightImgScrollView;
     NSView* rightImgScrollContainerView;
     //NSMutableArray* imgPathList;
     NSMutableDictionary* imgDict;
+    NSMutableArray* imgPathArray;
     NSImage* addImage;
     IBOutlet OpenGLView *openGlView;
     IBOutlet NSScrollView *rightImgScrollView;
@@ -32,14 +33,17 @@
     NSString* vertexShaderString;
     NSString* fragmentShaderString;
     
-    NSMutableDictionary* uniformDict;
-    NSMutableDictionary* uniformIndexDict;
+//    NSMutableDictionary* uniformDict;
+//    NSMutableDictionary* uniformIndexDict;
     
     NSSettingWindow* settingWindow;
     
     EditorWindow* vsEditWindow;
     EditorWindow* fsEditWindow;
     
+    CVDisplayLinkRef displayLink;
+    int flushFrame;
+    int flushCnt;
 }
 @end
 
@@ -53,21 +57,19 @@
     // Do view setup here.
     
     isInitView = false;
-    
+    flushFrame = 0;
+    flushCnt = 0;
     vertexShaderPath = nil;
     fragmentShaderPath = nil;
     
-    uniformDict = [[NSMutableDictionary alloc]initWithCapacity:10];
-    uniformIndexDict = [[NSMutableDictionary alloc]initWithCapacity:10];
+    imgPathArray = [[NSMutableArray alloc]initWithCapacity:10];
+//    uniformDict = [[NSMutableDictionary alloc]initWithCapacity:10];
+//    uniformIndexDict = [[NSMutableDictionary alloc]initWithCapacity:10];
     
     window = [NSApplication sharedApplication].windows[0];
     window.delegate = self;
 
     addImage = [NSImage imageNamed:@"add.png"];
-    
-    imgDict = [NSMutableDictionary dictionaryWithCapacity:10];
-    [imgDict setObject:[NSImage imageNamed:@"test.tiff"] forKey:@"test.tiff"];
-    [imgDict setObject:[NSImage imageNamed:@"test2.png"] forKey:@"test2.png"];
     
     
     imgScrollViewWidth = 110;
@@ -86,7 +88,6 @@
 //    openGlView = [[OpenGLView alloc]init];
 //    [self.view addSubview:openGlView];
     
-    [self drawRightImgList];
     
     [self.vertexShaderPath setShaderType:@"Vertex"];
     self.vertexShaderPath.dragDelegate = self;
@@ -95,12 +96,34 @@
     self.fragmentShaderPath.dragDelegate = self;
     
     
+    self.infoListTexView.editable = false;
+    
     NSString* vertFile = [[NSBundle mainBundle] pathForResource:@"Shader3" ofType:@"vs"];
     NSString* fragFile = [[NSBundle mainBundle] pathForResource:@"Shader3" ofType:@"frag"];
     
     vertexShaderString = [NSString stringWithContentsOfFile:vertFile encoding:NSUTF8StringEncoding error:nil];
     fragmentShaderString = [NSString stringWithContentsOfFile:fragFile encoding:NSUTF8StringEncoding error:nil];
-    [openGlView setVertexShader:vertexShaderString fragmentShader:fragmentShaderString];
+    NSError* error;
+    [openGlView setVertexShader:vertexShaderString fragmentShader:fragmentShaderString error:&error];
+    if(error){
+        self.infoListTexView.string = error.description;
+    }else{
+        self.infoListTexView.string = @"Compile Success!";
+    }
+    
+    imgDict = [NSMutableDictionary dictionaryWithCapacity:10];
+    NSString* key1 = @"test.tiff";
+    NSString* key2 = @"test2.png";
+    [imgDict setObject:[NSImage imageNamed:key1] forKey:key1];
+    [imgDict setObject:[NSImage imageNamed:key2] forKey:key2];
+    [imgPathArray addObject:key1];
+    [imgPathArray addObject:key2];
+    [self drawRightImgList];
+    
+    [openGlView.renderer addTexture:key1 image:[imgDict objectForKey:key1] at:0];
+    [openGlView.renderer addTexture:key2 image:[imgDict objectForKey:key2] at:1];
+    
+    
     
 //    SettingCellView* cell = [SettingCellView viewFromNIB];
 //    cell.frame = CGRectMake(0, 0, 200, 200);
@@ -131,10 +154,59 @@
 //    [previewBtn setAction:@selector(onCompileBtnClicked)];
 //    [self.view addSubview:previewBtn];
     
+    
+    
+    // Create a display link capable of being used with all active displays
+    CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
+    // Set the renderer output callback function
+    CVDisplayLinkSetOutputCallback(displayLink, &MyDisplayLinkCallback, (__bridge void*)self);
+    //CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink, cglContext, cglPixelFormat);
+    // Activate the display link
+    CVDisplayLinkStart(displayLink);
+}
+
+
+// This is the renderer output callback function
+static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
+                                      const CVTimeStamp* now,
+                                      const CVTimeStamp* outputTime,
+                                      CVOptionFlags flagsIn,
+                                      CVOptionFlags* flagsOut,
+                                      void* displayLinkContext)
+{
+    CVReturn result = [(__bridge MainViewController*)displayLinkContext updateUniformValue];
+    return result;
+}
+
+-(CVReturn)updateUniformValue{
+    if(flushFrame<15){ // 两次刷新一下,约30Fps
+        flushFrame ++;
+        return kCVReturnSuccess;
+    }
+    flushFrame = 0;
+    
+    //flushCnt++;
+    //NSLog(@"updateUniformValue:%d",flushCnt);
+    
+    
+    // There is no autorelease pool when this method is called
+    // because it will be called from a background thread.
+    // It's important to create one or app can leak objects.
+    @autoreleasepool {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            //NSLog(@"update data!");
+            [openGlView.renderer updateUniformValue];
+            if(settingWindow!=nil){
+                [settingWindow updateUniformValue];
+            }
+            [openGlView requestRender];
+        });
+    }
+    return kCVReturnSuccess;
 }
 
 -(void)drawRightImgList{
-    if(imgDict!=nil && imgDict.count>0){
+    if(imgDict!=nil && imgDict.count>0 && imgPathArray!=nil){
         NSArray* subViews = [rightImgScrollContainerView subviews];
         NSUInteger maxCnt = imgDict.count + 1;
 
@@ -172,14 +244,12 @@
             float y = totalHeight - vSpace - itemHeight - i * (itemHeight+vSpace);
             imgView.frame = CGRectMake(hSpace, y, itemWidth, itemHeight);
             imgView.tag = 0x1000+i;
-            if(i<imgDict.count){
-                NSString* path = imgDict.allKeys[i];
+            if(i<imgPathArray.count){
+                NSString* path = imgPathArray[i]; // imgDict.allKeys[i];
                 if([path isEqualToString:@"NULL"]){
                     [imgView setImage:addImage];
-                // }else if([path characterAtIndex:0]=='/'){
                 }else{
                     [imgView setImage:imgDict[path]];
-                    // [imgView setImage:[NSImage imageNamed:path]];
                 }
             }else{
                 [imgView setImage:addImage];
@@ -224,9 +294,23 @@
                     NSLog(@"SelPath:%@",path);
                     NSImage* img = [[NSImage alloc]initWithContentsOfFile:path];
                     if(img!=nil){
-                        NSString* key = strongSelf->imgDict.allKeys[selectIndex];
-                        [strongSelf->imgDict removeObjectForKey:key];
-                        [strongSelf->imgDict setObject:img forKey:path];
+                        if(selectIndex < strongSelf->imgPathArray.count){
+                            NSString* key = strongSelf->imgPathArray[selectIndex];
+                            [strongSelf->imgDict removeObjectForKey:key];
+                            [strongSelf->imgDict setObject:img forKey:path];
+                            [strongSelf->imgPathArray removeObjectAtIndex:selectIndex];
+                            [strongSelf->imgPathArray insertObject:path atIndex:selectIndex];
+                            if(![strongSelf->openGlView.renderer addTexture:path image:img at:(int)selectIndex]){
+                                strongSelf->_infoListTexView.string = [NSString stringWithFormat:@"%@ \nload texture:%@ failure!",strongSelf->_infoListTexView.string,path];
+                            }
+                        }else{
+                            [strongSelf->imgPathArray addObject:path];
+                            [strongSelf->imgDict setObject:img forKey:path];
+                            
+                            if(![strongSelf->openGlView.renderer addTexture:path image:img at:(int)strongSelf->imgPathArray.count]){
+                                strongSelf->_infoListTexView.string = [NSString stringWithFormat:@"%@ \nload texture:%@ failure!",strongSelf->_infoListTexView.string,path];
+                            }
+                        }
                         //strongSelf->imgPathList[selectIndex] = path;
                         // 指针连带关系self的引用计数还会增加.但是你这个是在block里面,生命周期也只在当前block的作用域.
                         // 所以,当这个block结束, strongSelf随之也就被释放了.同时也不会影响block外部的self的生命周期.
@@ -253,9 +337,24 @@
     if(img!=nil){
         //imgPathList[selectIndex] = path;
         
-        NSString* key = imgDict.allKeys[selectIndex];
-        [imgDict removeObjectForKey:key];
-        [imgDict setObject:img forKey:path];
+        if(selectIndex < imgPathArray.count){
+            NSString* key = imgPathArray[selectIndex];
+            [imgDict removeObjectForKey:key];
+            [imgDict setObject:img forKey:path];
+            
+            [imgPathArray removeObjectAtIndex:selectIndex];
+            [imgPathArray insertObject:path atIndex:selectIndex];
+            
+            if(![openGlView.renderer addTexture:path image:img at:(int)selectIndex]){
+                _infoListTexView.string = [NSString stringWithFormat:@"%@ \n load texture:%@ failure!",_infoListTexView.string,path];
+            }
+        }else{
+            [imgPathArray addObject:path];
+            [imgDict setObject:img forKey:path];
+            if(![openGlView.renderer addTexture:path image:img at:(int)imgPathArray.count]){
+                _infoListTexView.string = [NSString stringWithFormat:@"%@ \n load texture:%@ failure!",_infoListTexView.string,path];
+            }
+        }
         
         [self drawRightImgList];
     }
@@ -308,7 +407,7 @@
                     NSLog(@"selectVertexShaderFile:%@",path);
                     NSError* error;
                     NSStringEncoding code = NSUTF8StringEncoding;
-                    NSString* str = [[NSString alloc]initWithContentsOfFile:path usedEncoding:nil error:&error];
+                    NSString* str = [[NSString alloc]initWithContentsOfFile:path usedEncoding:&code error:&error];
                     if(error!=nil){
                         NSLog(@"Load Vertex Shader from %@ error:%@",path, error.description);
                     }else{
@@ -344,7 +443,7 @@
                     NSLog(@"selectVertexShaderFile:%@",path);
                     NSError* error;
                     NSStringEncoding code = NSUTF8StringEncoding;
-                    NSString* str = [[NSString alloc]initWithContentsOfFile:path usedEncoding:nil error:&error];
+                    NSString* str = [[NSString alloc]initWithContentsOfFile:path usedEncoding:&code error:&error];
                     if(error!=nil){
                         NSLog(@"Load Fragment Shader from %@ error:%@",path, error.description);
                     }else{
@@ -358,12 +457,37 @@
     }];
 }
 
+-(void)onEditorWindowShaderSaved:(NSString*)winTitle path:(NSString*)path shaderString:(NSString*)shaderStr{
+    //NSLog(@"onEditorWindowShaderSaved:%@", winTitle);
+    if([winTitle isEqualToString:@"VertexShader"]){
+        self.vertexShaderPath.stringValue = path;
+        vertexShaderPath = path;
+        vertexShaderString = shaderStr;
+    }else{
+        self.fragmentShaderPath.stringValue = path;
+        fragmentShaderPath = path;
+        fragmentShaderString = shaderStr;
+    }
+    
+    NSError* error;
+    [openGlView setVertexShader:vertexShaderString fragmentShader:fragmentShaderString error:&error];
+    if(error){
+        //self.infoListTexView.string = error.description;
+        _infoListTexView.string = [NSString stringWithFormat:@"%@ \n%@",_infoListTexView.string,error.description];
+    }else{
+        [self onCompileBtnClicked:nil];
+        //self.infoListTexView.string = @"Compile Success!";
+        _infoListTexView.string = [NSString stringWithFormat:@"%@ \nCompile Success!",_infoListTexView.string];
+    }
+}
+
 - (IBAction)openVertexShader:(id)sender {
 
     if(vsEditWindow==nil){
         vsEditWindow = [[EditorWindow alloc] initWithWindowNibName:@"EditorWindow"];  // DialogName 为你的xib文件名，不需要后缀
-        vsEditWindow.winTitle = @"VsEditorWindow";
-        vsEditWindow.window.title = @"VsEditorWindow";
+        vsEditWindow.winTitle = @"VertexShader";
+        vsEditWindow.window.title = @"VertexShader";
+        vsEditWindow.delegate = self;
         
         [vsEditWindow loadWindow];
         //Mac中对话框显示方法有两种，一种跟windows的对话框一样，另一种为Sheet（卷帘式）对话框。
@@ -390,9 +514,9 @@
 - (IBAction)openFragmentShader:(id)sender {
     if(fsEditWindow==nil){
         fsEditWindow = [[EditorWindow alloc] initWithWindowNibName:@"EditorWindow"];  // DialogName 为你的xib文件名，不需要后缀
-        fsEditWindow.winTitle = @"FsEditorWindow";
-        fsEditWindow.window.title = @"FsEditorWindow";
-        
+        fsEditWindow.winTitle = @"FragmentShader";
+        fsEditWindow.window.title = @"FragmentShader";
+        fsEditWindow.delegate = self;
         [fsEditWindow loadWindow];
         //Mac中对话框显示方法有两种，一种跟windows的对话框一样，另一种为Sheet（卷帘式）对话框。
         //windows风格的对话框，分模态和非模态
@@ -429,10 +553,10 @@
 }
 
 - (BOOL)windowShouldClose:(NSWindow *)sender{
+    CVDisplayLinkStop(displayLink);
     NSLog(@"-----windowShouldClose----!cls:%@",sender.className);
     return true;
 }
-
 
 //- (void)reshape
 //{
@@ -441,11 +565,11 @@
 //}
 - (IBAction)onCompileBtnClicked:(id)sender {
     [openGlView requestRender];
-    [openGlView.renderer getUniformVariant:uniformDict withUniformIndexDict:uniformIndexDict];
+    [openGlView.renderer getUniformVariant];
     
     if(settingWindow!=nil){
-        settingWindow.uniformDict = uniformDict;
-        settingWindow.uniformIndexDict = uniformIndexDict;
+        settingWindow.uniformValueDict = openGlView.renderer.valueDict;
+        settingWindow.uniformNameArray = openGlView.renderer.uniformNameList;
         //[[NSNotificationCenter defaultCenter] postNotificationName:@"UPDATE_SHADER_UNIFORM" object:nil];
         [settingWindow onUniformUpdate:nil];
     }
@@ -454,7 +578,7 @@
 
 - (IBAction)onSettingBtnClicked:(id)sender {
     
-    [openGlView.renderer getUniformVariant:uniformDict withUniformIndexDict:uniformIndexDict];
+    [openGlView.renderer getUniformVariant];
     
     if(settingWindow==nil){
         settingWindow = [[NSSettingWindow alloc] initWithWindowNibName:@"NSSettingWindow"];  // DialogName 为你的xib文件名，不需要后缀
@@ -464,19 +588,16 @@
         //Mac中对话框显示方法有两种，一种跟windows的对话框一样，另一种为Sheet（卷帘式）对话框。
         //windows风格的对话框，分模态和非模态
         settingWindow.window.title = [NSSettingWindow className];
-        settingWindow.uniformDict = uniformDict;
-        settingWindow.uniformIndexDict = uniformIndexDict;
-        settingWindow.delegate = self;
+        settingWindow.uniformValueDict = openGlView.renderer.valueDict;
+        settingWindow.uniformNameArray = openGlView.renderer.uniformNameList;
+        //[[NSNotificationCenter defaultCenter] postNotificationName:@"UPDATE_SHADER_UNIFORM" object:nil];
+        //[settingWindow onUniformUpdate:nil];
     }
     [settingWindow updateScrollView];
     // 非模态：
     [[settingWindow window] makeKeyAndOrderFront:nil];
     //模态：
     //[NSApp runModalForWindow:[settingWindow window]];
-}
-
--(void)onUniformValueChanged:(NSString*)uniformName withIndex:(int)index withType:(int)type withValue:(NSNumber*) number{
-        
 }
 
 //-(void)windowWillClose:(NSNotification *)notification{

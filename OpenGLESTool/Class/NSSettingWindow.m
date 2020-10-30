@@ -10,6 +10,7 @@
 #import "NSScrollView+NSSTools.h"
 #import "SettingCellView.h"
 #import <GLUT/GLUT.h>
+#import "SettingCellValue.h"
 
 @interface NSSettingWindow ()<NSWindowDelegate>
 
@@ -24,18 +25,23 @@
     NSObject* uniformIndexObserver;
     NSWindow* window;
     NSView* documentView;
-    CVDisplayLinkRef displayLink;
-    int flushFrame;
-    int flushCnt;
+    NSButton* selBtn;
+    NSRecursiveLock* lock;
 }
 
 -(instancetype)init{
     self = [super init];
     if(self){
+        lock = [[NSRecursiveLock alloc]init];
+        //_valueDict = [NSMutableDictionary dictionary];
         NSLog(@"NSSettingWindow init");
     }
     return self;
 }
+
+//-(void)setUniformDict:(NSMutableDictionary *)uniformDict{
+//    _uniformDict = uniformDict;
+//}
 
 //- (instancetype)initWithFrame:(NSRect)frame
 //{
@@ -45,6 +51,20 @@
 //    }
 //    return self;
 //}
+
+- (void)setUniformValueDict:(NSDictionary *)uniformValueDict
+{
+    [lock lock];
+    //[_valueDict removeAllObjects];
+    _uniformValueDict = [[NSMutableDictionary alloc] initWithDictionary:uniformValueDict];
+    [lock unlock];
+}
+
+- (void)setUniformNameArray:(NSArray *)uniformNameArray{
+    [lock lock];
+    _uniformNameArray = [[NSArray alloc] initWithArray:uniformNameArray];
+    [lock unlock];
+}
 
 -(void)awakeFromNib{
     [super awakeFromNib];
@@ -76,18 +96,7 @@
     documentView = [[NSView alloc]init];
     _topScrollView.documentView = documentView;
     
-    flushFrame = 0;
-    flushCnt = 0;
     //[self updateScrollView];
-    // Create a display link capable of being used with all active displays
-    CVDisplayLinkCreateWithActiveCGDisplays(&displayLink);
-    
-    // Set the renderer output callback function
-    CVDisplayLinkSetOutputCallback(displayLink, &MyDisplayLinkCallback, (__bridge void*)self);
-    
-    //CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink, cglContext, cglPixelFormat);
-    // Activate the display link
-    CVDisplayLinkStart(displayLink);
     
     // Register to be notified when the window closes so we can stop the displaylink
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -97,18 +106,6 @@
     
     // char* ch = glGetString(GL_SHADING_LANGUAGE_VERSION);
         
-}
-
-// This is the renderer output callback function
-static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
-                                      const CVTimeStamp* now,
-                                      const CVTimeStamp* outputTime,
-                                      CVOptionFlags flagsIn,
-                                      CVOptionFlags* flagsOut,
-                                      void* displayLinkContext)
-{
-    CVReturn result = [(__bridge NSSettingWindow*)displayLinkContext updateUniformValue];
-    return result;
 }
 
 -(void)windowWillClose:(NSNotification *)notification{
@@ -124,38 +121,19 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
     
     
     
-    // Stop the display link when the window is closing because default
-    // OpenGL render buffers will be destroyed.  If display link continues to
-    // fire without renderbuffers, OpenGL draw calls will set errors.
-    CVDisplayLinkStop(displayLink);
+    
 }
 
--(CVReturn)updateUniformValue{
-    if(flushFrame==0){ // 两次刷新一下,约30Fps
-        flushFrame = 1;
-        return kCVReturnSuccess;
-    }
-    flushFrame = 0;
-    
-    //flushCnt++;
-    //NSLog(@"updateUniformValue:%d",flushCnt);
-    
-    
-    // There is no autorelease pool when this method is called
-    // because it will be called from a background thread.
-    // It's important to create one or app can leak objects.
-    @autoreleasepool {
-        dispatch_sync(dispatch_get_main_queue(), ^{
-            NSArray* views = self.bottomView.subviews;
-            for(int i=0;i<views.count;i++){
-                SettingCellView* cellView = (SettingCellView*)views[i];
-                if(!cellView.isHidden){
-                    [cellView updateValue];
-                }
+-(void)updateUniformValue{
+    if(_uniformValueDict!=nil){
+        NSArray* views = self.bottomView.subviews;
+        for(int i=0;i<views.count;i++){
+            SettingCellView* cellView = (SettingCellView*)views[i];
+            if(!cellView.isHidden){
+                [cellView updateValue];
             }
-        });
+        }
     }
-    return kCVReturnSuccess;
 }
 
 - (void)windowDidResize:(NSNotification *)notification{
@@ -180,10 +158,10 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
     //[[NSNotificationCenter defaultCenter] removeObserver:self name:@"UPDATE_SHADER_UNIFORM" object:nil];
 }
 
-
 -(void) updateScrollView{
-    if(_uniformDict!=nil){
-        NSUInteger maxCnt = self.uniformDict.count;
+    if(_uniformNameArray!=nil){
+                
+        NSUInteger maxCnt = self.uniformNameArray.count;
         
         NSArray* subViews = [documentView subviews];
         
@@ -202,6 +180,7 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
                 [view removeFromSuperview];
             }
         }else if(subViews.count < maxCnt){
+            documentView.frame = CGRectMake(0,0, self.topScrollView.frame.size.width, totalHeight);
             for (NSUInteger i=subViews.count; i<maxCnt; i++) {
                 float y = totalHeight - vSpace - itemHeight - i * (itemHeight+vSpace);
                 NSButton* imgView = [[NSButton alloc] initWithFrame:CGRectMake(hSpace, y, itemWidth, itemHeight)];
@@ -215,9 +194,10 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
                 [imgView setTarget:self];
                 [imgView setImageScaling:NSImageScaleProportionallyUpOrDown];
                 [imgView setAction:@selector(onUniformNameClick:)];
+                
             }
             //rightImgScrollView.contentSize = CGSizeMake(rightImgScrollView.frame.size.width, vSpace + maxCnt * (vSpace + itemHeight));
-            documentView.frame = CGRectMake(0,0, self.topScrollView.frame.size.width, totalHeight);
+            
         }
         subViews = [documentView subviews];
         for (int i=0; i<subViews.count; i++) {
@@ -226,21 +206,58 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
             float y = totalHeight - vSpace - itemHeight - i * (itemHeight+vSpace);
             imgView.frame = CGRectMake(hSpace, y, itemWidth, itemHeight);
             imgView.tag = 0x2000+i;
-            [imgView setTitle:self.uniformDict.allKeys[i]];
+            [imgView setTitle:self.uniformNameArray[i]];
+            
+            // 创建段落样式，主要是为了设置居中
+            NSMutableParagraphStyle* pghStyle = [[NSMutableParagraphStyle alloc] init];
+            pghStyle.alignment = NSTextAlignmentCenter;
+            // 创建Attributes，设置颜色和段落样式
+            NSDictionary* dicAtt = @{NSForegroundColorAttributeName: [NSColor whiteColor], NSParagraphStyleAttributeName: pghStyle, NSFontAttributeName:[NSFont systemFontOfSize:20]};
+            // 创建NSAttributedString赋值给NSButton的attributedTitle属性
+            imgView.attributedTitle = [[NSAttributedString alloc] initWithString:self.uniformNameArray[i] attributes:dicAtt];
         }
         [self.topScrollView scrollToTop];
+        
+        subViews = [documentView subviews];
+        if(subViews.count>0){
+            //[self onUniformNameClick:(NSButton *)[subViews objectAtIndex:0]];// 重新加载uniform数据
+        }
     }
 }
 
 -(void)onUniformNameClick:(NSButton*)sender{
     long selectIndex = ((NSView*)sender).tag-0x2000;
     NSLog(@"onUniformNameClick tag:%ld", selectIndex);
-    
-    if(self.uniformDict!=nil && self.uniformIndexDict!=nil && selectIndex<self.uniformDict.count){
+    if(selBtn!=nil){
+        // 创建段落样式，主要是为了设置居中
+        NSMutableParagraphStyle* pghStyle = [[NSMutableParagraphStyle alloc] init];
+        pghStyle.alignment = NSTextAlignmentCenter;
+        // 创建Attributes，设置颜色和段落样式
+        NSDictionary* dicAtt = @{NSForegroundColorAttributeName: [NSColor whiteColor], NSParagraphStyleAttributeName: pghStyle, NSFontAttributeName:[NSFont systemFontOfSize:20]};
+        // 创建NSAttributedString赋值给NSButton的attributedTitle属性
+        selBtn.attributedTitle = [[NSAttributedString alloc] initWithString:selBtn.title attributes:dicAtt];
+    }
+    selBtn = sender;
+    if(selBtn!=nil){
+        // 创建段落样式，主要是为了设置居中
+        NSMutableParagraphStyle* pghStyle = [[NSMutableParagraphStyle alloc] init];
+        pghStyle.alignment = NSTextAlignmentCenter;
+        // 创建Attributes，设置颜色和段落样式
+        NSDictionary* dicAtt = @{NSForegroundColorAttributeName: [NSColor greenColor], NSParagraphStyleAttributeName: pghStyle, NSFontAttributeName:[NSFont systemFontOfSize:20]};
+        // 创建NSAttributedString赋值给NSButton的attributedTitle属性
+        selBtn.attributedTitle = [[NSAttributedString alloc] initWithString:selBtn.title attributes:dicAtt];
+    }
+    if(self.uniformValueDict!=nil && self.uniformNameArray!=nil && selectIndex<self.uniformNameArray.count){
         
-        int type = [[self.uniformDict objectForKey:self.uniformDict.allKeys[selectIndex]] intValue];
+        NSString* key = self.uniformNameArray[selectIndex];
+        SettingCellValue* val = [self.uniformValueDict objectForKey:[NSString stringWithFormat:@"%@_%d",key,0]];
+        if(val==nil){
+            NSLog(@"onUniformNameClick uniformValueDict not found value:%@", [NSString stringWithFormat:@"%@_%d",key,0]);
+            return;
+        }
+        int type = val.uniformType;
         
-        int cnt = [NSSettingWindow getUniformCnt:type];
+        int cnt = val.totalCnt;
         
         NSArray* views = self.bottomView.subviews;
         if(views.count > cnt){
@@ -275,14 +292,22 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
             cols = 4;
         }
         
+        [lock lock];
         views = self.bottomView.subviews;
         for (int i=0; i<cnt; i++) {
             SettingCellView* cellView = (SettingCellView*)views[i];
             [views[i] setHidden:false];
-            [cellView setTitle:[NSSettingWindow getName:type withIndex:i]];
-            cellView.isIntValue = [NSSettingWindow isIntUniform:type];
-            cellView.isFloatValue = [NSSettingWindow isFloatUniform:type];
-            cellView.isBoolValue = [NSSettingWindow isBoolUniform:type];
+            cellView.settingValue = [_uniformValueDict objectForKey:[NSString stringWithFormat:@"%@_%d",key,i]];
+            [cellView resetValue];
+//            [cellView setTitle:[NSSettingWindow getName:type withIndex:i]];
+////            cellView.isIntValue = [NSSettingWindow isIntUniform:type];
+////            cellView.isFloatValue = [NSSettingWindow isFloatUniform:type];
+////            cellView.isBoolValue = [NSSettingWindow isBoolUniform:type];
+//
+//            cellView.isIntValue = cellView.settingValue.isIntValue;
+//            cellView.isFloatValue = cellView.settingValue.isFloatValue;
+//            cellView.isBoolValue = cellView.settingValue.isBoolValue;
+            
             
             int row = i / cols;
             int col = i % cols;
@@ -291,6 +316,7 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
             float y = _bottomView.frame.size.height - vSpace - itemHeight - row * (vSpace + itemHeight);
             cellView.frame = CGRectMake(x, y, itemWidth, itemHeight);
         }
+        [lock unlock];
         
         int w = self.window.frame.size.width;
         int vw = hSpace + cnt/cols * (hSpace + itemWidth);
@@ -310,100 +336,24 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
         
         [self.window setFrame:CGRectMake(self.window.frame.origin.x, self.window.frame.origin.y, w, h) display:false];
         [self.window setViewsNeedDisplay:true];
+        
     }
 }
 
-+(bool)isIntUniform:(int)type{
-    if(type == GL_INT_VEC2
-    || type == GL_INT_VEC3
-    || type == GL_INT_VEC4
-    || type == GL_BOOL
-    || type == GL_SAMPLER_2D
-    || type == GL_SAMPLER_CUBE )
-        return true;
-    return false;
-}
+//-(void)checkValueChanged:(NSArray*) list{
+//    //检测并上报值变化
+//    if(self.delegate!=nil){
+//        NSArray* views = self.bottomView.subviews;
+//        for(int i=0;i<views.count;i++){
+//            SettingCellView* cellView = (SettingCellView*)views[i];
+//            if(!cellView.isHidden){
+//                [cellView updateValue];
+//                //self.delegate onUniformValueChanged:<#(nonnull NSString *)#> withIndex:<#(int)#> withType:<#(int)#> withValue:<#(nonnull NSArray *)#>
+//            }
+//        }
+//    }
+//}
 
-+(bool)isBoolUniform:(int)type{
-    if(type == GL_BOOL_VEC2
-       || type == GL_BOOL_VEC3
-       || type == GL_BOOL_VEC4
-       || type == GL_INT )
-        return true;
-    return false;
-}
-
-+(bool)isFloatUniform:(int)type{
-    if(type == GL_FLOAT_VEC2
-       || type == GL_FLOAT_VEC3
-       || type == GL_FLOAT_VEC4
-       || type == GL_FLOAT
-       || type == GL_FLOAT_MAT2
-       || type == GL_FLOAT_MAT3
-       || type == GL_FLOAT_MAT4)
-        return true;
-    return false;
-}
-
-+(int)getUniformCnt:(int)type{
-    int cnt = 1;
-    switch(type){
-        case GL_FLOAT:
-            cnt = 1;
-            break;
-        case GL_FLOAT_VEC2:
-            cnt = 2;
-            break;
-        case  GL_FLOAT_VEC3:
-            cnt = 3;
-            break;
-        case  GL_FLOAT_VEC4:
-            cnt = 4;
-            break;
-        case GL_INT:
-            cnt = 1;
-            break;
-        case  GL_INT_VEC2:
-            cnt = 2;
-            break;
-        case  GL_INT_VEC3:
-            cnt = 3;
-            break;
-        case  GL_INT_VEC4:
-            cnt = 4;
-            break;
-        case GL_BOOL:
-            cnt = 1;
-            break;
-        case GL_BOOL_VEC2:
-            cnt = 2;
-            break;
-        case GL_BOOL_VEC3:
-            cnt = 3;
-            break;
-        case GL_BOOL_VEC4:
-            cnt = 4;
-            break;
-        case GL_FLOAT_MAT2:
-            cnt = 4;
-            break;
-        case GL_FLOAT_MAT3:
-            cnt = 9;
-            break;
-        case  GL_FLOAT_MAT4:
-            cnt = 16;
-            break;
-        case  GL_SAMPLER_2D:
-            cnt = 1;
-            break;
-        case GL_SAMPLER_CUBE:
-            cnt = 1;
-            break;
-        default:
-            break;
-    }
-    return cnt;
-}
 
 +(NSString*)getName:(int)type withIndex:(int)index{
     NSArray* names = @[@"x",@"y",@"z",@"w"];

@@ -24,15 +24,21 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic,copy) NSString* vertexShader;
 @property (nonatomic,copy) NSString* fragmentShader;
 
-- (instancetype)initVertexShader:(NSString*) vertex fragmentShader:(NSString*)fragment;
+@property (nonatomic,retain) NSDictionary* valueDict;
+@property (nonatomic,retain) NSArray* uniformNameList;
+
+- (instancetype)initVertexShader:(NSString*) vertex fragmentShader:(NSString*)fragment error:(NSError**)error;
 
 - (void) resizeWithWidth:(GLuint)width AndHeight:(GLuint)height;
 - (void) render;
 - (void) dealloc;
 
-- (void)setImage:(NSImage*) image;
+- (int)setImage:(NSImage*) image;
 
--(void)getUniformVariant:(NSMutableDictionary*) dict withUniformIndexDict:(NSMutableDictionary*)uniformIndexDict;
+-(void)getUniformVariant;
+-(void)updateUniformValue;
+
+-(bool)addTexture:(NSString*)path image:(NSImage*)image at:(int)index;
 
 @end
 

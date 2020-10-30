@@ -20,7 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) OpenGLRenderer* renderer;
 
 - (void)setImage:(NSImage*)img;
--(void)setVertexShader:(NSString*) vertex fragmentShader:(NSString*)fragment;
+-(NSString*)setVertexShader:(NSString*) vertex fragmentShader:(NSString*)fragment error:(NSError**)error;
 - (void) requestRender;
 @end
 

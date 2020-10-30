@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (strong) IBOutlet DragFileInEditText *vertexShaderPath;
 @property (strong) IBOutlet DragFileInEditText *fragmentShaderPath;
 
+@property (unsafe_unretained) IBOutlet NSTextView *infoListTexView;
 
 @end
 

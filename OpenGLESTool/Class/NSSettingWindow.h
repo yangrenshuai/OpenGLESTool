@@ -13,21 +13,20 @@ NS_ASSUME_NONNULL_BEGIN
 #define UPDATE_SHADER_UNIFORM "UPDATE_SHADER_UNIFORM";
 #define UPDATE_SHADER_UNIFORM_INDEX "UPDATE_SHADER_UNIFORM_INDEX";
 
-@protocol NSSettingWindowDelegate <NSObject>
--(void)onUniformValueChanged:(NSString*)uniformName withIndex:(int)index withType:(int)type withValue:(NSNumber*) number;
-//-(void)onSettingWindowClosed;
-@end
+//@protocol NSSettingWindowDelegate <NSObject>
+//-(void)onUniformValueChanged:(NSString*)uniformName withIndex:(int)index withType:(int)type withValue:(NSArray*) numbers;
+//@end
 
 @interface NSSettingWindow : NSWindowController
 
-@property(nonatomic,assign)id<NSSettingWindowDelegate>delegate;
+//@property(nonatomic,assign)id<NSSettingWindowDelegate>delegate;
 
-@property (nonatomic, retain) NSMutableDictionary* uniformDict;
-@property (nonatomic, retain) NSMutableDictionary* uniformIndexDict;
+@property (nonatomic, retain) NSArray* uniformNameArray;
+@property (nonatomic, retain) NSDictionary* uniformValueDict;
 
 -(void)onUniformUpdate:(NSNotification*)ntf;
 -(void)updateScrollView;
-
+-(void)updateUniformValue;
 @end
 
 NS_ASSUME_NONNULL_END

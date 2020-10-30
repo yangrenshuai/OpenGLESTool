@@ -7,6 +7,7 @@
 //
 
 #import "OpenGLRenderer.h"
+#import "SettingCellValue.h"
 //#include "glUtil.h"
 //#include "imageUtil.h"
 //#include "sourceUtil.h"
@@ -40,24 +41,38 @@
     
     GLuint m_InputTextureId;
     
+    //NSDictionary* uniformDict;
+    //NSArray* uniformNameArray;
+    NSRecursiveLock* lock;
+    
+    NSMutableDictionary* textureDict;
+    
 }
 @end
 
 @implementation OpenGLRenderer
 
-- (instancetype)initVertexShader:(NSString*) vertex fragmentShader:(NSString*)fragment{
+- (instancetype)initVertexShader:(NSString*) vertex fragmentShader:(NSString*)fragment error:(NSError**)error{
     if((self = [super init])) {
         NSLog(@"Render: %s; Version:%s", glGetString(GL_RENDERER), glGetString(GL_VERSION));
         
         self.vertexShader = vertex;
         self.fragmentShader = fragment;
+        lock = [[NSRecursiveLock alloc]init];
+        textureDict = [NSMutableDictionary dictionary];
         
-        [self initializeGL];
+        [self initializeGL:error];
         
         //清除缓存
         [self clearRenderBuffer];
     }
     return self;
+}
+
+- (void)setValueDict:(NSDictionary *)valueDict{
+    [lock lock];
+    _valueDict = [[NSDictionary alloc]initWithDictionary:valueDict];
+    [lock unlock];
 }
 
 - (void)resizeWithWidth:(GLuint)width AndHeight:(GLuint)height {
@@ -83,7 +98,7 @@
 
 - (void) render {
     
-    NSLog(@"OpenGlRenderer render!");
+    //NSLog(@"OpenGlRenderer render!");
     
     [self clearRenderBuffer];
     
@@ -106,9 +121,32 @@
     glBufferData(GL_ARRAY_BUFFER, 4 * 4 * sizeof(float), vertexPoints, GL_STATIC_DRAW);
     [self CheckGLError:@"render 1"];
     
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_InputTextureId);
-    glUniform1i(textureUniform, 0);
+//    glActiveTexture(GL_TEXTURE0);
+//    glBindTexture(GL_TEXTURE_2D, m_InputTextureId);
+//    glUniform1i(textureUniform, 0);
+    
+    [lock lock];
+    if(_valueDict!=nil){
+        for (NSString* name in self.uniformNameList) {
+            SettingCellValue* value = [_valueDict objectForKey:[NSString stringWithFormat:@"%@_%d",name,0]];
+            if(value!=nil){
+                GLfloat* vals = (GLfloat*)malloc(sizeof(GLfloat)*value.totalCnt);
+                for (int i=0; i<value.totalCnt; i++) {
+                    SettingCellValue* value2 = [_valueDict objectForKey:[NSString stringWithFormat:@"%@_%d",name,i]];
+                    if(value2!=nil){
+                        vals[i] = value2.value;
+                    }else{
+                        vals[i] = 0;
+                    }
+                }
+                [self updateUniformValue:name type:value.uniformType index:value.uniformIndex withValue:vals];
+                free(vals);
+            }
+        }
+    }else{
+        
+    }
+    [lock unlock];
     
     [self CheckGLError:@"render 2"];
     // Draw stuff
@@ -118,7 +156,68 @@
     
 }
 
+-(void)updateUniformValue:(NSString*)uniformName type:(int)uniformType index:(GLint)index withValue:(GLfloat*)number{
+    if(uniformName!=nil){
+        switch(uniformType){
+            case GL_FLOAT:
+                glUniform1f(index, number[0]);
+                break;
+            case GL_FLOAT_VEC2:
+                glUniform2f(index, number[0], number[1]);
+                break;
+            case  GL_FLOAT_VEC3:
+                glUniform3f(index, number[0], number[1], number[2]);
+                break;
+            case  GL_FLOAT_VEC4:
+                glUniform4f(index, number[0], number[1], number[2], number[3]);
+                break;
+            case GL_INT:
+                glUniform1i(index, (int)roundf(number[0]));
+                break;
+            case  GL_INT_VEC2:
+                glUniform2i(index, (int)roundf(number[0]), (int)roundf(number[1]));
+                break;
+            case  GL_INT_VEC3:
+                glUniform3i(index, (int)roundf(number[0]), (int)roundf(number[1]), (int)roundf(number[2]));
+                break;
+            case  GL_INT_VEC4:
+                glUniform4i(index, number[0],(int)roundf(number[0]), (int)roundf(number[1]), (int)roundf(number[2]));
+                break;
+            case GL_BOOL:
+                glUniform1i(index, (int)roundf(number[0]));
+                break;
+            case GL_BOOL_VEC2:
+                glUniform2i(index, (int)roundf(number[0]), (int)roundf(number[1]));
+                break;
+            case GL_BOOL_VEC3:
+                glUniform3i(index, (int)roundf(number[0]), (int)roundf(number[1]), (int)roundf(number[2]));
+                break;
+            case GL_BOOL_VEC4:
+                glUniform4i(index, (int)roundf(number[0]), (int)roundf(number[1]), (int)roundf(number[2]), (int)roundf(number[3]));
+                break;
+            case GL_FLOAT_MAT2:
+                glUniformMatrix2fv(index, 4, GL_FALSE, number);
+                break;
+            case GL_FLOAT_MAT3:
+                glUniformMatrix3fv(index, 9, GL_FALSE, number);
+                break;
+            case  GL_FLOAT_MAT4:
+                glUniformMatrix4fv(index, 16, GL_FALSE, number);
+                break;
+            case  GL_SAMPLER_2D:
+                glUniform1i(index, (int)roundf(number[0]));
+                break;
+            case GL_SAMPLER_CUBE:
+                
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 - (void) dealloc {
+    NSLog(@"OpenGLRenderer dealloc!");
     if(m_program>0){
         glDeleteProgram(m_program);
     }
@@ -132,12 +231,12 @@
 }
 
 #pragma mark init methdos
--(void)initializeGL {
+-(void)initializeGL:(NSError**)error{
     
     m_InputTextureId = 0;
     
     // 准备 着色器程序
-    [self prepareShaderProgram];
+    [self prepareShaderProgram:error];
     
     textureUniform = glGetUniformLocation(m_program, "tex");
     
@@ -175,15 +274,18 @@
 //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         
 }
--(void)prepareShaderProgram {
+-(void)prepareShaderProgram:(NSError**)error {
     
     NSLog(@"prepareShaderProgram!");
     
     //NSString* vertFile = [[NSBundle mainBundle] pathForResource:@"Shader3" ofType:@"vs"]; // 读取文件路径
     //NSString* fragFile = [[NSBundle mainBundle] pathForResource:@"Shader3" ofType:@"frag"];
     //m_program = [self loadShaders:vertFile frag:fragFile isFile:true]; //加载shader
-    
-    m_program = [self loadShaders:self.vertexShader frag:self.fragmentShader isFile:false];
+    if(m_program>0){
+        glDeleteProgram(m_program);
+        m_program = 0;
+    }
+    m_program = [self loadShaders:self.vertexShader frag:self.fragmentShader isFile:false error:error];
     
     //链接
     //glBindFragDataLocation(m_program, 0, "fragColor");
@@ -201,8 +303,7 @@
         glGetProgramInfoLog(m_program, logSize, NULL, logMsg );
         NSLog(@"Link Error: %s", logMsg);
         delete [] logMsg;
-            
-        exit( EXIT_FAILURE );
+        //exit( EXIT_FAILURE );
     }
         
     //use program object
@@ -210,12 +311,13 @@
 }
 
 
--(void)getUniformVariant:(NSMutableDictionary*) dict withUniformIndexDict:(NSMutableDictionary*)uniformIndexDict{
+-(void)getUniformVariant{
     
     if(m_program==0){
         return;
     }
-    // textureUniform = glGetUniformLocation(m_program, "tex");
+    NSMutableDictionary* udict = [NSMutableDictionary dictionary];
+    NSMutableArray* nameList = [NSMutableArray array];
     GLint activeUniforms=0;
     glGetProgramiv(m_program,GL_ACTIVE_UNIFORMS,&activeUniforms);
     NSLog(@"GL_ACTIVE_UNIFORMS:%d",activeUniforms);
@@ -229,10 +331,29 @@
         //extern void glGetActiveUniform (GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name)
         
         NSLog(@"glGetActiveUniform name:%s type:%u", name, type);
-
-        [dict setValue:[NSNumber numberWithInt:type] forKey:[NSString stringWithFormat:@"%s",name]];
         
-        [uniformIndexDict setValue:[NSNumber numberWithInt:i] forKey:[NSString stringWithFormat:@"%s",name]];
+        GLint index = glGetUniformLocation(m_program, name);
+        
+        int cnt = [OpenGLRenderer getUniformCnt:type];
+        int typeIndex = [OpenGLRenderer getUniformType:type];
+        bool isInt = typeIndex == 0;
+        bool isBool = typeIndex == 1;
+        bool isFloat = typeIndex == 2;
+        
+        [nameList addObject:[NSString stringWithFormat:@"%s",name]];
+        
+        for (int i=0; i<cnt; i++) {
+            SettingCellValue* value = [[SettingCellValue alloc]init];
+            value.uniformType = type;
+            value.uniformIndex = index;
+            value.totalCnt = cnt;
+            value.index = i;
+            value.isBoolValue = isBool;
+            value.isIntValue = isInt;
+            value.isFloatValue = isFloat;
+            value.uniformName = [NSString stringWithFormat:@"%s_%d",name,i];
+            [udict setObject:value forKey:value.uniformName];
+        }
         
         delete [] name;
         
@@ -248,17 +369,61 @@
         //GLAPI void APIENTRY glGetActiveUniformName (GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName) OPENGL_DEPRECATED(10.5, 10.14);
     }
     
+    [lock lock];
+    self.valueDict = [[NSDictionary alloc]initWithDictionary:udict];
+    self.uniformNameList = [[NSArray alloc]initWithArray:nameList];
+    [lock unlock];
+    
     //glGetActiveUniformsiv(
     //glGetActiveUniform 和glGetActiveUniformsiv查找
 }
 
-- (GLuint)loadShaders:(NSString *)vert frag:(NSString *)frag isFile:(bool)isFile{
+-(void)updateUniformValue{
+    [lock lock];
+    if(self.valueDict!=nil){
+        NSArray* list = self.valueDict.allValues;
+        if(list!=nil){
+            for(SettingCellValue* value in list){
+                [value updateValue];
+            }
+        }
+    }
+    [lock unlock];
+}
+
+-(bool)addTexture:(NSString*)path image:(NSImage*)image at:(int)index{
+    NSNumber* key = [NSNumber numberWithInt:index];
+    NSNumber* texId = [textureDict objectForKey:key];
+    if(texId!=nil){
+        GLuint texs[1];
+        texs[0] = texId.intValue;
+        glDeleteTextures(1, texs);
+        
+    }
+    int texture = [self genTexture:image index:index];
+    if(texture>0){
+        [textureDict setObject:[NSNumber numberWithInt:texture] forKey:key];
+        
+        glActiveTexture(GL_TEXTURE0 + index);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        
+        return true;
+    }else{
+        [textureDict setObject:[NSNumber numberWithInt:0] forKey:key];
+    }
+    return false;
+}
+
+- (GLuint)loadShaders:(NSString *)vert frag:(NSString *)frag isFile:(bool)isFile error:(NSError**)error {
     GLuint verShader, fragShader;
     GLint program = glCreateProgram();
     
     //编译
-    verShader = [self compileShader:GL_VERTEX_SHADER shader:vert isFile:isFile];
-    fragShader = [self compileShader:GL_FRAGMENT_SHADER shader:frag isFile:isFile];
+    verShader = [self compileShader:GL_VERTEX_SHADER shader:vert isFile:isFile error:error];
+    if(*error){
+        return 0;
+    }
+    fragShader = [self compileShader:GL_FRAGMENT_SHADER shader:frag isFile:isFile error:error];
     glAttachShader(program, verShader);
     glAttachShader(program, fragShader);
     //释放不需要的shader
@@ -268,7 +433,7 @@
     return program;
 }
 
-- (GLuint)compileShader:(GLenum)type shader:(NSString *)file isFile:(bool)isFile{
+- (GLuint)compileShader:(GLenum)type shader:(NSString *)file isFile:(bool)isFile error:(NSError**)error {
     //读取字符串
     const GLchar* source = nil;
     if(isFile){
@@ -292,8 +457,15 @@
         char* logMsg = new char[logSize];
         glGetShaderInfoLog( shader, logSize, NULL, logMsg );
         NSLog(@"Shader compile log:%s\n", logMsg);
+        if(error!=nil){
+            if(type == GL_VERTEX_SHADER){
+                *error = [NSError errorWithDomain:[NSString stringWithFormat:@"Compile Vertex Shader error:%s", logMsg] code:-1 userInfo:nil];
+            }else{
+                *error = [NSError errorWithDomain:[NSString stringWithFormat:@"Compile Fragment Shader error:%s", logMsg] code:-1 userInfo:nil];
+            }
+        }
         delete [] logMsg;
-        exit(EXIT_FAILURE);
+        //exit(EXIT_FAILURE);
     }
     return shader;
 }
@@ -317,10 +489,10 @@
     
 }
 
-- (void)setImage:(NSImage*) image{
+- (int)setImage:(NSImage*) image{
     
     if(image==nil){
-        return;
+        return 0;
     }
     
     int iw = [image size].width;
@@ -328,7 +500,6 @@
     
     m_nVideoW = [image size].width;
     m_nVideoH = [image size].height;
-    
     
     
     if(m_InputTextureId!=0){
@@ -370,6 +541,60 @@
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, iw, ih, 0, GL_BGRA, GL_UNSIGNED_BYTE, imageData);
     free(imageData);
     
+    return m_InputTextureId;
+}
+
+- (int)genTexture:(NSImage*) image index:(int)index{
+    
+    if(image==nil){
+        return 0;
+    }
+    
+    int iw = [image size].width;
+    int ih = [image size].height;
+    
+    if(index==0){
+        m_nVideoW = [image size].width; // 根据第0张图确定显示比例
+        m_nVideoH = [image size].height;
+    }
+    
+    GLuint texture;
+    glActiveTexture(GL_TEXTURE0 + index);
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    
+
+    // 1. Error
+    //CGImageRef newImageSource = [self NSImageToCGImageRef:image];
+    //CFDataRef dataFromImageDataProvider = CGDataProviderCopyData(CGImageGetDataProvider(newImageSource));
+    //GLubyte* imageData = (GLubyte *)CFDataGetBytePtr(dataFromImageDataProvider);
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, [image size].width, [image size].height, 0, GL_BGRA, GL_UNSIGNED_BYTE, imageData);
+    
+    // 2. Error
+    //NSData *imageData = [image TIFFRepresentation];
+    //GLubyte* rgbaData = (GLubyte*)imageData.bytes;
+    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, [image size].width, [image size].height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgbaData);
+
+    // 3. Right
+    CGImageRef newImageSource = [self NSImageToCGImageRef:image];
+    GLubyte* imageData = (GLubyte *)calloc(1, (size_t)iw * (size_t)ih * 4);
+    CGColorSpaceRef RGBColorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef imageContext = CGBitmapContextCreate(imageData,
+                                                      (size_t)iw, (size_t)ih,
+                                                      8,
+                                                      (size_t)iw * 4, RGBColorSpace,
+                                                      kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+    CGContextDrawImage(imageContext, CGRectMake(0, 0, iw, ih), newImageSource);
+    CGContextRelease(imageContext);
+    CGColorSpaceRelease(RGBColorSpace);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, iw, ih, 0, GL_BGRA, GL_UNSIGNED_BYTE, imageData);
+    free(imageData);
+    
+    return texture;
 }
 
 -(void) CheckGLError:(NSString*)pGLOperation
@@ -379,5 +604,117 @@
         NSLog(@"CheckGLError GL Operation %@ glError (0x%x)\n", pGLOperation, error);
     }
 }
+
++(int)getUniformType:(int)type{
+    if(type == GL_INT_VEC2
+    || type == GL_INT_VEC3
+    || type == GL_INT_VEC4
+    || type == GL_INT
+    || type == GL_SAMPLER_2D
+       || type == GL_SAMPLER_CUBE ){
+        return 0;
+    }else if(type == GL_BOOL_VEC2
+       || type == GL_BOOL_VEC3
+       || type == GL_BOOL_VEC4
+       || type == GL_BOOL )
+    {
+        return 1;
+    }else{
+        return 2;
+    }
+}
+
++(bool)isIntUniform:(int)type{
+    if(type == GL_INT_VEC2
+    || type == GL_INT_VEC3
+    || type == GL_INT_VEC4
+    || type == GL_INT
+    || type == GL_SAMPLER_2D
+    || type == GL_SAMPLER_CUBE )
+        return true;
+    return false;
+}
+
++(bool)isBoolUniform:(int)type{
+    if(type == GL_BOOL_VEC2
+       || type == GL_BOOL_VEC3
+       || type == GL_BOOL_VEC4
+       || type == GL_BOOL)
+        return true;
+    return false;
+}
+
++(bool)isFloatUniform:(int)type{
+    if(type == GL_FLOAT_VEC2
+       || type == GL_FLOAT_VEC3
+       || type == GL_FLOAT_VEC4
+       || type == GL_FLOAT
+       || type == GL_FLOAT_MAT2
+       || type == GL_FLOAT_MAT3
+       || type == GL_FLOAT_MAT4)
+        return true;
+    return false;
+}
+
++(int)getUniformCnt:(int)type{
+    int cnt = 1;
+    switch(type){
+        case GL_FLOAT:
+            cnt = 1;
+            break;
+        case GL_FLOAT_VEC2:
+            cnt = 2;
+            break;
+        case  GL_FLOAT_VEC3:
+            cnt = 3;
+            break;
+        case  GL_FLOAT_VEC4:
+            cnt = 4;
+            break;
+        case GL_INT:
+            cnt = 1;
+            break;
+        case  GL_INT_VEC2:
+            cnt = 2;
+            break;
+        case  GL_INT_VEC3:
+            cnt = 3;
+            break;
+        case  GL_INT_VEC4:
+            cnt = 4;
+            break;
+        case GL_BOOL:
+            cnt = 1;
+            break;
+        case GL_BOOL_VEC2:
+            cnt = 2;
+            break;
+        case GL_BOOL_VEC3:
+            cnt = 3;
+            break;
+        case GL_BOOL_VEC4:
+            cnt = 4;
+            break;
+        case GL_FLOAT_MAT2:
+            cnt = 4;
+            break;
+        case GL_FLOAT_MAT3:
+            cnt = 9;
+            break;
+        case  GL_FLOAT_MAT4:
+            cnt = 16;
+            break;
+        case  GL_SAMPLER_2D:
+            cnt = 1;
+            break;
+        case GL_SAMPLER_CUBE:
+            cnt = 1;
+            break;
+        default:
+            break;
+    }
+    return cnt;
+}
+
 
 @end

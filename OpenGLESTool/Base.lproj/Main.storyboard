@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="16097.2" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="16097.3" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097.2"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="16097.3"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -706,20 +706,20 @@
             <objects>
                 <viewController id="XfG-lQ-9wD" customClass="MainViewController" sceneMemberID="viewController">
                     <view key="view" id="m2S-Jp-Qdl">
-                        <rect key="frame" x="0.0" y="0.0" width="480" height="270"/>
+                        <rect key="frame" x="0.0" y="0.0" width="480" height="381"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <customView translatesAutoresizingMaskIntoConstraints="NO" id="7lh-7J-02C" customClass="OpenGLView">
-                                <rect key="frame" x="5" y="57" width="360" height="208"/>
+                                <rect key="frame" x="5" y="157" width="360" height="219"/>
                             </customView>
                             <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="EMY-F5-eEs">
-                                <rect key="frame" x="370" y="57" width="110" height="213"/>
+                                <rect key="frame" x="370" y="157" width="110" height="224"/>
                                 <clipView key="contentView" id="EZa-qQ-gpt">
-                                    <rect key="frame" x="1" y="1" width="93" height="211"/>
+                                    <rect key="frame" x="1" y="1" width="93" height="222"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <view id="YYc-gC-YZe">
-                                            <rect key="frame" x="0.0" y="0.0" width="78" height="196"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="78" height="207"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         </view>
                                     </subviews>
@@ -732,12 +732,12 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                 </scroller>
                                 <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="efo-JC-KmO">
-                                    <rect key="frame" x="94" y="1" width="15" height="211"/>
+                                    <rect key="frame" x="94" y="1" width="15" height="222"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                 </scroller>
                             </scrollView>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="O9u-5i-Bbt">
-                                <rect key="frame" x="3" y="33" width="34" height="16"/>
+                                <rect key="frame" x="3" y="133" width="34" height="16"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="30" id="6ln-yW-Szg"/>
                                     <constraint firstAttribute="height" constant="16" id="qsH-y0-GV0"/>
@@ -749,7 +749,7 @@
                                 </textFieldCell>
                             </textField>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="f7l-gs-8K7">
-                                <rect key="frame" x="3" y="10" width="34" height="16"/>
+                                <rect key="frame" x="3" y="110" width="34" height="16"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="30" id="UYF-nP-Not"/>
                                     <constraint firstAttribute="height" constant="16" id="xTB-EV-nXN"/>
@@ -761,7 +761,7 @@
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="vmF-HJ-JLs" customClass="DragFileInEditText">
-                                <rect key="frame" x="40" y="31" width="234" height="21"/>
+                                <rect key="frame" x="40" y="131" width="234" height="21"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="21" id="qbR-R6-Uhe"/>
                                 </constraints>
@@ -772,7 +772,7 @@
                                 </textFieldCell>
                             </textField>
                             <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="los-g7-ax0" customClass="DragFileInEditText">
-                                <rect key="frame" x="40" y="7" width="234" height="21"/>
+                                <rect key="frame" x="40" y="107" width="234" height="21"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="21" id="YCy-Pw-6eu"/>
                                 </constraints>
@@ -783,7 +783,7 @@
                                 </textFieldCell>
                             </textField>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="teJ-Nm-gn4" userLabel="SelectVertex">
-                                <rect key="frame" x="273" y="23" width="43" height="32"/>
+                                <rect key="frame" x="273" y="123" width="43" height="32"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="31" id="Y54-g5-XTr"/>
                                     <constraint firstAttribute="height" constant="21" id="yr1-4A-Hde"/>
@@ -797,7 +797,7 @@
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="wiI-sA-Wm8" userLabel="SelectFragment">
-                                <rect key="frame" x="273" y="-1" width="43" height="32"/>
+                                <rect key="frame" x="273" y="99" width="43" height="32"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="21" id="5AL-Jh-MA2"/>
                                     <constraint firstAttribute="width" constant="31" id="h8U-wU-O6p"/>
@@ -811,7 +811,7 @@
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="IwE-Xm-auE" userLabel="OpenVertex">
-                                <rect key="frame" x="309" y="23" width="62" height="31"/>
+                                <rect key="frame" x="309" y="123" width="62" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="50" id="BOk-tG-DaP"/>
                                     <constraint firstAttribute="height" constant="20" id="hm8-r2-79r"/>
@@ -821,11 +821,11 @@
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="openVertexShader:" target="XfG-lQ-9wD" id="3DU-8N-W0T"/>
+                                    <action selector="openVertexShader:" target="XfG-lQ-9wD" id="1J4-pe-9WI"/>
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DyH-FE-REQ" userLabel="OpenFragment">
-                                <rect key="frame" x="309" y="-1" width="62" height="31"/>
+                                <rect key="frame" x="309" y="99" width="62" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="50" id="5k7-TY-VJG"/>
                                     <constraint firstAttribute="height" constant="20" id="wuf-dR-zzD"/>
@@ -835,11 +835,11 @@
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
                                 <connections>
-                                    <action selector="openFragmentShader:" target="XfG-lQ-9wD" id="gQI-aD-tBH"/>
+                                    <action selector="openFragmentShader:" target="XfG-lQ-9wD" id="tcF-Hc-pkw"/>
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ctu-jM-cG4" userLabel="OpenFragment">
-                                <rect key="frame" x="364" y="0.0" width="117" height="32"/>
+                                <rect key="frame" x="364" y="100" width="117" height="32"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="21" id="t9f-LF-JQr"/>
                                     <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="105" id="xQR-eW-xlf"/>
@@ -853,7 +853,7 @@
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="6pQ-wh-iUt" userLabel="OpenFragment">
-                                <rect key="frame" x="364" y="23" width="117" height="32"/>
+                                <rect key="frame" x="364" y="123" width="117" height="32"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="105" id="JOu-qQ-a4d"/>
                                     <constraint firstAttribute="height" constant="21" id="TP4-lu-Nex"/>
@@ -866,6 +866,32 @@
                                     <action selector="onCompileBtnClicked:" target="XfG-lQ-9wD" id="YkB-AA-WSP"/>
                                 </connections>
                             </button>
+                            <scrollView borderType="none" horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" translatesAutoresizingMaskIntoConstraints="NO" id="184-PO-KIE">
+                                <rect key="frame" x="5" y="7" width="475" height="92"/>
+                                <clipView key="contentView" drawsBackground="NO" copiesOnScroll="NO" id="hXw-05-G2I">
+                                    <rect key="frame" x="0.0" y="0.0" width="460" height="92"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <textView importsGraphics="NO" richText="NO" verticallyResizable="YES" spellingCorrection="YES" smartInsertDelete="YES" id="yYP-Ot-aya">
+                                            <rect key="frame" x="0.0" y="0.0" width="460" height="92"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                            <color key="textColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                                            <size key="minSize" width="460" height="92"/>
+                                            <size key="maxSize" width="460" height="10000000"/>
+                                            <color key="insertionPointColor" name="textColor" catalog="System" colorSpace="catalog"/>
+                                        </textView>
+                                    </subviews>
+                                </clipView>
+                                <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="PtC-4W-JFl">
+                                    <rect key="frame" x="-100" y="-100" width="225" height="15"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </scroller>
+                                <scroller key="verticalScroller" verticalHuggingPriority="750" horizontal="NO" id="MW5-MQ-LPx">
+                                    <rect key="frame" x="460" y="0.0" width="15" height="92"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </scroller>
+                            </scrollView>
                         </subviews>
                         <constraints>
                             <constraint firstItem="wiI-sA-Wm8" firstAttribute="leading" secondItem="los-g7-ax0" secondAttribute="trailing" constant="5" id="6Rq-RZ-5Lm"/>
@@ -875,28 +901,32 @@
                             <constraint firstAttribute="trailing" secondItem="6pQ-wh-iUt" secondAttribute="trailing" constant="5" id="CfI-AN-72w"/>
                             <constraint firstItem="7lh-7J-02C" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="5" id="DRB-ub-2E8"/>
                             <constraint firstItem="O9u-5i-Bbt" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="5" id="E3U-Se-bRQ"/>
+                            <constraint firstItem="184-PO-KIE" firstAttribute="top" secondItem="wiI-sA-Wm8" secondAttribute="bottom" constant="7" id="FTE-q3-jrt"/>
                             <constraint firstItem="DyH-FE-REQ" firstAttribute="leading" secondItem="wiI-sA-Wm8" secondAttribute="trailing" constant="5" id="GNY-5m-dOV"/>
                             <constraint firstItem="EMY-F5-eEs" firstAttribute="top" secondItem="m2S-Jp-Qdl" secondAttribute="top" id="GvA-Jp-PWJ"/>
                             <constraint firstItem="teJ-Nm-gn4" firstAttribute="baseline" secondItem="IwE-Xm-auE" secondAttribute="baseline" id="H5r-f5-Qq4"/>
                             <constraint firstItem="vmF-HJ-JLs" firstAttribute="top" secondItem="7lh-7J-02C" secondAttribute="bottom" constant="5" id="Jc0-An-nJp"/>
+                            <constraint firstAttribute="trailing" secondItem="184-PO-KIE" secondAttribute="trailing" id="LJv-xy-xTR"/>
                             <constraint firstItem="6pQ-wh-iUt" firstAttribute="leading" secondItem="IwE-Xm-auE" secondAttribute="trailing" constant="5" id="LVD-Oj-9P0"/>
                             <constraint firstItem="los-g7-ax0" firstAttribute="leading" secondItem="f7l-gs-8K7" secondAttribute="trailing" constant="5" id="N6m-PR-fxW"/>
                             <constraint firstItem="teJ-Nm-gn4" firstAttribute="leading" secondItem="vmF-HJ-JLs" secondAttribute="trailing" constant="5" id="PE7-em-rg5"/>
                             <constraint firstItem="Ctu-jM-cG4" firstAttribute="top" secondItem="6pQ-wh-iUt" secondAttribute="bottom" constant="2" id="Qx1-NP-jCi"/>
+                            <constraint firstItem="184-PO-KIE" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="5" id="Tf7-Ud-HOj"/>
                             <constraint firstItem="Ctu-jM-cG4" firstAttribute="leading" secondItem="DyH-FE-REQ" secondAttribute="trailing" constant="5" id="UGf-v9-UgC"/>
                             <constraint firstItem="los-g7-ax0" firstAttribute="baseline" secondItem="f7l-gs-8K7" secondAttribute="baseline" id="VA3-Js-0mR"/>
-                            <constraint firstAttribute="bottom" secondItem="Ctu-jM-cG4" secondAttribute="bottom" constant="7" id="VaC-qh-QkA"/>
+                            <constraint firstAttribute="bottom" secondItem="Ctu-jM-cG4" secondAttribute="bottom" constant="107" id="VaC-qh-QkA"/>
                             <constraint firstItem="IwE-Xm-auE" firstAttribute="leading" secondItem="teJ-Nm-gn4" secondAttribute="trailing" constant="5" id="Vjm-hM-0xm"/>
                             <constraint firstItem="EMY-F5-eEs" firstAttribute="leading" secondItem="IwE-Xm-auE" secondAttribute="trailing" constant="5" id="XVy-Ak-44A"/>
+                            <constraint firstAttribute="bottom" secondItem="184-PO-KIE" secondAttribute="bottom" constant="7" id="a2K-uy-sGd"/>
                             <constraint firstItem="los-g7-ax0" firstAttribute="top" secondItem="vmF-HJ-JLs" secondAttribute="bottom" constant="3" id="cvU-sJ-tWk"/>
                             <constraint firstAttribute="trailing" secondItem="EMY-F5-eEs" secondAttribute="trailing" id="eQ7-kx-jms"/>
-                            <constraint firstAttribute="bottom" secondItem="EMY-F5-eEs" secondAttribute="bottom" constant="57" id="eqi-3p-rp7"/>
                             <constraint firstItem="vmF-HJ-JLs" firstAttribute="leading" secondItem="O9u-5i-Bbt" secondAttribute="trailing" constant="5" id="i9G-ey-B3O"/>
                             <constraint firstAttribute="trailing" secondItem="Ctu-jM-cG4" secondAttribute="trailing" constant="5" id="iS5-vq-aBy"/>
                             <constraint firstItem="teJ-Nm-gn4" firstAttribute="baseline" secondItem="O9u-5i-Bbt" secondAttribute="baseline" id="iYQ-Xb-XLG"/>
+                            <constraint firstItem="6pQ-wh-iUt" firstAttribute="top" secondItem="EMY-F5-eEs" secondAttribute="bottom" constant="6" id="kC7-Kg-jmv"/>
                             <constraint firstItem="Ctu-jM-cG4" firstAttribute="leading" secondItem="DyH-FE-REQ" secondAttribute="trailing" constant="5" id="mGx-q2-HN0"/>
                             <constraint firstItem="f7l-gs-8K7" firstAttribute="leading" secondItem="m2S-Jp-Qdl" secondAttribute="leading" constant="5" id="nbN-Of-Q8s"/>
-                            <constraint firstAttribute="bottom" secondItem="f7l-gs-8K7" secondAttribute="bottom" constant="10" id="osf-5Z-Pir"/>
+                            <constraint firstAttribute="bottom" secondItem="f7l-gs-8K7" secondAttribute="bottom" constant="110" id="osf-5Z-Pir"/>
                             <constraint firstItem="DyH-FE-REQ" firstAttribute="baseline" secondItem="wiI-sA-Wm8" secondAttribute="baseline" id="s1P-6j-aCO"/>
                             <constraint firstItem="EMY-F5-eEs" firstAttribute="leading" secondItem="7lh-7J-02C" secondAttribute="trailing" constant="5" id="xN8-LI-g7r"/>
                         </constraints>
@@ -904,6 +934,7 @@
                     <connections>
                         <outlet property="VertexShaderPath" destination="vmF-HJ-JLs" id="pl9-qM-c95"/>
                         <outlet property="fragmentShaderPath" destination="los-g7-ax0" id="tgH-Uv-S7a"/>
+                        <outlet property="infoListTexView" destination="yYP-Ot-aya" id="IrU-kK-pMT"/>
                         <outlet property="openGlView" destination="7lh-7J-02C" id="cck-ia-sYR"/>
                         <outlet property="rightImgScrollView" destination="EMY-F5-eEs" id="UCg-gL-3t9"/>
                         <outlet property="vertexShaderPath" destination="vmF-HJ-JLs" id="rYW-Jw-48D"/>
@@ -911,7 +942,7 @@
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="75" y="655"/>
+            <point key="canvasLocation" x="75" y="710.5"/>
         </scene>
     </scenes>
 </document>

@@ -161,14 +161,17 @@ static CVReturn MyDisplayLinkCallback(CVDisplayLinkRef displayLink,
 //    [_renderer setImage:image];
 }
 
--(void)setVertexShader:(NSString*) vertex fragmentShader:(NSString*)fragment{
+-(void)setVertexShader:(NSString*) vertex fragmentShader:(NSString*)fragment error:(NSError**)error{
     
     [[self openGLContext] makeCurrentContext];
     
     CGLLockContext([[self openGLContext] CGLContextObj]);
+    if(_renderer!=nil){
+        
+    }
     // Init our renderer.  Use 0 for the defaultFBO which is appropriate for
     // OSX (but not iOS since iOS apps must create their own FBO)
-    _renderer = [[OpenGLRenderer alloc] initVertexShader:vertex fragmentShader:fragment];
+    _renderer = [[OpenGLRenderer alloc] initVertexShader:vertex fragmentShader:fragment error:error];
 
     [_renderer resizeWithWidth:viewRectPixels.size.width
     AndHeight:viewRectPixels.size.height];
